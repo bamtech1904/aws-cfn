@@ -1,17 +1,4 @@
-<!-- omit in toc -->
-# CloudFormationテンプレート実装覚書
-
----
-
-<!-- omit in toc -->
-# 目次
-- [1. Lambda](#1-lambda)
-  - [1.1. billing-function](#11-billing-function)
-
-
-# 1. Lambda
-## 1.1. billing-function
-- 使ったプロンプト
+- 使ったGPTプロンプト
 ```
 あなたはプロのAWSエンジニアです。
 あなたは日次でAWSサービス毎の請求額をSlackに通知する仕組みを実装する必要があります。
