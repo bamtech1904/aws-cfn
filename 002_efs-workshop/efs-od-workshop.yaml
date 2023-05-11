@@ -82,6 +82,10 @@ Parameters:
     Default: 10.0.0.0/16
     Description: Select the private IPv4 CIDR for the VPC.
     Type: String
+# Use public Systems Manager Parameter
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
 
 Resources:
   AttachInternetGateway:
@@ -244,22 +248,22 @@ Resources:
       IpProtocol: -1
       SourceSecurityGroupId: !Ref FileSystemSecurityGroup
 
-  AmiInfoFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Code:
-        S3Bucket: !Sub solution-references-${AWS::Region}
-        S3Key: fsx/amilookup-lin.zip
-      Handler: amilookup-lin.handler
-      Runtime: nodejs12.x
-      Timeout: 30
-      Role: !GetAtt LambdaExecutionRoleAmiInfo.Arn
-  AmiInfo:
-    Type: Custom::AmiInfo
-    Properties:
-      ServiceToken: !GetAtt AmiInfoFunction.Arn
-      Region: !Ref 'AWS::Region'
-      OSName: Amazon Linux 2 (x86_64)
+  # AmiInfoFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     Code:
+  #       S3Bucket: !Sub solution-references-${AWS::Region}
+  #       S3Key: fsx/amilookup-lin.zip
+  #     Handler: amilookup-lin.handler
+  #     Runtime: nodejs16.x
+  #     Timeout: 30
+  #     Role: !GetAtt LambdaExecutionRoleAmiInfo.Arn
+  # AmiInfo:
+  #   Type: Custom::AmiInfo
+  #   Properties:
+  #     ServiceToken: !GetAtt AmiInfoFunction.Arn
+  #     Region: !Ref 'AWS::Region'
+  #     OSName: Amazon Linux 2 (x86_64)
   Instance0:
     DependsOn: FileSystem
     Type: AWS::EC2::Instance
@@ -306,7 +310,7 @@ Resources:
       LaunchTemplateData:
         IamInstanceProfile:
           Name: !Ref InstanceProfile
-        ImageId: !GetAtt AmiInfo.Id
+        ImageId: !Ref LatestAmiId
         KeyName: !Ref KeyPair
         Monitoring:
           Enabled: true
@@ -378,30 +382,30 @@ Resources:
                 - cp -R ${!ebs_directory}/smallfile/file_srcdir ${!ebs_directory}/data-1m/
                 - yum update -y
                 - reboot
-  LambdaExecutionRoleAmiInfo:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
-      Path: "/"
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - ec2:DescribeImages
-            Resource: "*"
+  # LambdaExecutionRoleAmiInfo:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #       - Effect: Allow
+  #         Principal:
+  #           Service:
+  #           - lambda.amazonaws.com
+  #         Action:
+  #         - sts:AssumeRole
+  #     ManagedPolicyArns:
+  #       - 'arn:aws:iam::aws:policy/AWSLambdaExecute'
+  #     Path: "/"
+  #     Policies:
+  #     - PolicyName: root
+  #       PolicyDocument:
+  #         Version: '2012-10-17'
+  #         Statement:
+  #         - Effect: Allow
+  #           Action:
+  #           - ec2:DescribeImages
+  #           Resource: "*"
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
